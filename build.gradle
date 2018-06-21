@@ -1,0 +1,77 @@
+group 'com.x.uni.session'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+sourceCompatibility = 1.8
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+configurations.all {
+	    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+	    resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
+ 	}
+ext {
+    baseProjectName = "x-uni-session"
+    moduleVersion = "1.0-SNAPSHOT"
+    publishUserName = "admin"
+    publishUserPassword = "admin123"
+//    publishURL = "http://172.16.8.35:8081/nexus/content/repositories/snapshots/"
+	publishURL = "http://172.16.8.35:8081/nexus/content/repositories/snapshots/"
+    
+}
+
+repositories {
+    maven { url "http://172.16.8.35:8081/nexus/content/groups/public/" }
+}
+
+dependencies {
+    compile "javax.servlet:javax.servlet-api:3.1.0"
+	//compile 'com.ifudata.centra:centra-sdk:1.0-SNAPSHOT'
+	compile 'com.x:sdk:1.0-SNAPSHOT'
+}
+
+publish.dependsOn build
+
+
+publishing {
+    publications {
+        publishing.publications.create("${baseProjectName}", MavenPublication) {
+            groupId group
+            artifactId baseProjectName
+            version moduleVersion
+            artifact jar
+            pom.withXml {
+                asNode().children().last() + {
+                    delegate.dependencies {
+                     delegate.dependency {
+                            delegate.groupId("com.x")
+                            delegate.artifactId("sdk")
+                            delegate.version("1.0-SNAPSHOT")
+                            delegate.exclusions{
+                                delegate.exclusion{
+                                    delegate.groupId("org.quartz-scheduler")
+                                    delegate.artifactId("quartz")
+                                }
+                        	}
+                        }
+                        delegate.dependency {
+                            delegate.groupId("javax.servlet")
+                            delegate.artifactId("javax.servlet-api")
+                            delegate.version("3.1.0")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url publishURL
+            credentials {
+                username = publishUserName
+                password = publishUserPassword
+            }
+        }
+    }
+}
